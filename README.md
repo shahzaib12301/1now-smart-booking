@@ -18,6 +18,9 @@ npm run dev                 # http://localhost:3000
 Nothing else to configure. The database is a local SQLite file, and `.env` is committed on purpose
 (it only holds the SQLite path). Re-seed at any time with `npx prisma db seed`.
 
+A step-by-step walkthrough of every scenario, plus a short review of the feature, is in
+[TESTING.md](TESTING.md).
+
 Run the unit tests for the overlap logic:
 
 ```bash
