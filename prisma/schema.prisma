@@ -1,0 +1,39 @@
+// Prisma schema for 1Now Smart Booking (SQLite, zero-setup for reviewers).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Car {
+  id        String    @id @default(cuid())
+  make      String
+  model     String
+  year      Int
+  plate     String    @unique
+  dailyRate Int // USD per day, whole dollars
+  color     String?
+  status    String    @default("ACTIVE") // ACTIVE | IN_SERVICE
+  bookings  Booking[]
+}
+
+model Booking {
+  id         String   @id @default(cuid())
+  car        Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  carId      String
+  renterName String
+  // Half-open range [startDate, endDate), stored as UTC midnight dates.
+  startDate  DateTime
+  endDate    DateTime
+  status     String   @default("CONFIRMED") // CONFIRMED | CANCELLED
+  totalPrice Int
+  flagged    Boolean  @default(false)
+  flagReason String?
+  createdAt  DateTime @default(now())
+
+  @@index([carId, startDate, endDate])
+}

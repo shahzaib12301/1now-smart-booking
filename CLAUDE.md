@@ -49,7 +49,14 @@ Chosen because it's 1Now's #1 core workflow, hits both "booking" AND their headl
 ## 4. Current status
 
 - ✅ Next.js + TS + Tailwind + ESLint scaffolded (App Router, `src/` dir, import alias `@/*`).
-- ⬜ Everything in the Build plan below is still TODO.
+- ✅ Build plan steps 1–9 done (2026-10-09): Prisma 6 + SQLite, seed, availability helper
+  + 17 unit tests, API routes (cars / bookings / availability / calendar.ics), dashboard
+  timeline + booking form, risk flag, README. Lint, tsc, tests, `next build` all clean.
+  Verified end-to-end with curl: 201 / 400 / 404 / 409, and a 4-way race → exactly one 201.
+- Notes: Prisma pinned to v6 (v8 is `latest` but an RC; v7 needs driver adapters). `.env` is
+  committed on purpose (only the SQLite path). Dashboard calls `await connection()` because
+  `cacheComponents` is on and `new Date()` must not be prerendered.
+- ⬜ Remaining: commit + push to GitHub, record Loom, reply to HR.
 
 Run the dev server: `npm run dev` → http://localhost:3000
 
