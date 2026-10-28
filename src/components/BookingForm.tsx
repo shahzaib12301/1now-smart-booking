@@ -198,7 +198,7 @@ export function BookingForm({ cars, today }: Props) {
       </p>
 
       <div className="mt-4 grid gap-3">
-        <label className="grid min-w-0 gap-1 text-sm">
+        <label className="relative grid min-w-0 gap-1 text-sm">
           <span className={labelCls}>Car</span>
           <select suppressHydrationWarning value={carId} onChange={(e) => edit(setCarId)(e.target.value)} className={inputCls}>
             {cars.map((c) => (
@@ -209,10 +209,15 @@ export function BookingForm({ cars, today }: Props) {
           </select>
         </label>
 
-        <label className="grid min-w-0 gap-1 text-sm">
+        <label className="relative grid min-w-0 gap-1 text-sm">
           <span className={labelCls}>Renter name</span>
           <input
             suppressHydrationWarning
+            autoComplete="off"
+            data-lpignore="true"
+            data-1p-ignore
+            data-bwignore
+            data-form-type="other"
             value={renterName}
             onChange={(e) => edit(setRenterName)(e.target.value)}
             placeholder="e.g. Maria Lopez"
@@ -222,10 +227,15 @@ export function BookingForm({ cars, today }: Props) {
         </label>
 
         <div className="grid grid-cols-2 gap-3">
-          <label className="grid min-w-0 gap-1 text-sm">
+          <label className="relative grid min-w-0 gap-1 text-sm">
             <span className={labelCls}>Email</span>
             <input
               suppressHydrationWarning
+              autoComplete="off"
+              data-lpignore="true"
+              data-1p-ignore
+              data-bwignore
+              data-form-type="other"
               type="email"
               value={renterEmail}
               onChange={(e) => edit(setRenterEmail)(e.target.value)}
@@ -233,10 +243,15 @@ export function BookingForm({ cars, today }: Props) {
               className={inputCls}
             />
           </label>
-          <label className="grid min-w-0 gap-1 text-sm">
+          <label className="relative grid min-w-0 gap-1 text-sm">
             <span className={labelCls}>Phone</span>
             <input
               suppressHydrationWarning
+              autoComplete="off"
+              data-lpignore="true"
+              data-1p-ignore
+              data-bwignore
+              data-form-type="other"
               type="tel"
               value={renterPhone}
               onChange={(e) => edit(setRenterPhone)(e.target.value)}
@@ -246,7 +261,7 @@ export function BookingForm({ cars, today }: Props) {
           </label>
         </div>
 
-        <label className="grid min-w-0 gap-1 text-sm">
+        <label className="relative grid min-w-0 gap-1 text-sm">
           <span className={labelCls}>Pick-up location</span>
           <select suppressHydrationWarning value={pickupLocation} onChange={(e) => edit(setPickupLocation)(e.target.value)} className={inputCls}>
             {PICKUP_LOCATIONS.map((l) => (
@@ -281,7 +296,7 @@ export function BookingForm({ cars, today }: Props) {
 
         <AvailabilityBanner availability={availability} car={car} />
 
-        <label className="grid min-w-0 gap-1 text-sm">
+        <label className="relative grid min-w-0 gap-1 text-sm">
           <span className={labelCls}>Notes</span>
           <textarea
             suppressHydrationWarning
