@@ -42,6 +42,11 @@ two renters, one car, one of them stranded. 1Now's headline promise is preventin
   transaction and returns **HTTP 409** with the conflicting booking(s). The UI check is a convenience;
   the API is the guarantee.
 - **Validation**: real dates only, return after pick-up, pick-up not in the past (400).
+- **Custom date and time pickers**: a calendar that marks the selected car's booked days in red, and
+  half-hour pick-up and return time slots. Bookings are stored as exact pick-up and return instants,
+  so a 10:00 return and a 10:00 pick-up on the same day are allowed and a 09:00 pick-up is not.
+- **Booking details**: renter email and phone, pick-up location, and handover notes, shown in the
+  timeline tooltip.
 
 **Bonuses (small nods to the rest of 1Now's product).**
 

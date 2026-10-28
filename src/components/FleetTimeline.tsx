@@ -1,4 +1,4 @@
-import { formatRange, toDateOnly } from "@/lib/availability";
+import { formatRange, formatRangeWithTime, toDateOnly } from "@/lib/availability";
 
 export interface TimelineBooking {
   id: string;
@@ -8,6 +8,10 @@ export interface TimelineBooking {
   totalPrice: number;
   flagged: boolean;
   flagReason: string | null;
+  renterEmail?: string | null;
+  renterPhone?: string | null;
+  pickupLocation?: string | null;
+  notes?: string | null;
 }
 
 export interface TimelineCar {
@@ -162,9 +166,16 @@ export function FleetTimeline({ cars, windowStart, windowDays, today }: Props) {
                           b.flagged ? "bg-amber-500" : "bg-sky-600"
                         }`}
                         style={{ left: left + 2, width: width - 4, height: 44 }}
-                        title={`${b.renterName} · ${label} · $${b.totalPrice}${
-                          b.flagged ? ` · ⚠ ${b.flagReason}` : ""
-                        }`}
+                        title={[
+                          `${b.renterName} · ${formatRangeWithTime({ startDate: s, endDate: e })} · ${b.totalPrice}`,
+                          b.pickupLocation ? `Pick-up: ${b.pickupLocation}` : null,
+                          b.renterPhone ? `Phone: ${b.renterPhone}` : null,
+                          b.renterEmail ? `Email: ${b.renterEmail}` : null,
+                          b.notes ? `Notes: ${b.notes}` : null,
+                          b.flagged ? `⚠ ${b.flagReason}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(String.fromCharCode(10))}
                       >
                         <span className="block truncate text-[11px] font-medium leading-4">
                           {b.flagged ? "⚠ " : ""}

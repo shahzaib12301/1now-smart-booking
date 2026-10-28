@@ -17,7 +17,13 @@ import {
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const carId = params.get("carId");
-  const validated = validateRange(params.get("start"), params.get("end"));
+  const validated = validateRange(
+    params.get("start"),
+    params.get("end"),
+    new Date(),
+    params.get("startTime") ?? "10:00",
+    params.get("endTime") ?? "10:00",
+  );
 
   if (!carId) {
     return NextResponse.json({ error: "carId is required." }, { status: 400 });

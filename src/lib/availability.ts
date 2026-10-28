@@ -50,6 +50,23 @@ export function parseDateOnly(value: unknown): Date | null {
   return date;
 }
 
+/** Parses "HH:mm" (24h). Returns null for anything else. */
+export function parseTime(value: unknown): { h: number; m: number } | null {
+  if (typeof value !== "string" || !/^\d{2}:\d{2}$/.test(value)) return null;
+  const h = Number(value.slice(0, 2));
+  const m = Number(value.slice(3, 5));
+  if (h > 23 || m > 59) return null;
+  return { h, m };
+}
+
+/** Combines a YYYY-MM-DD day and an HH:mm time into one UTC instant. */
+export function parseDateTime(date: unknown, time: unknown): Date | null {
+  const day = parseDateOnly(date);
+  const t = parseTime(time);
+  if (!day || !t) return null;
+  return new Date(day.getTime() + (t.h * 60 + t.m) * 60_000);
+}
+
 /** Today at 00:00 UTC, used as the "not in the past" floor. */
 export function todayUtc(now: Date = new Date()): Date {
   return new Date(
@@ -64,9 +81,11 @@ export function validateRange(
   start: unknown,
   end: unknown,
   now: Date = new Date(),
+  startTime: unknown = "00:00",
+  endTime: unknown = "00:00",
 ): { ok: true; range: DateRange } | { ok: false; error: ValidationError } {
-  const startDate = parseDateOnly(start);
-  const endDate = parseDateOnly(end);
+  const startDate = parseDateTime(start, startTime);
+  const endDate = parseDateTime(end, endTime);
 
   if (!startDate || !endDate) {
     return {
@@ -86,7 +105,7 @@ export function validateRange(
       },
     };
   }
-  if (startDate < todayUtc(now)) {
+  if (parseDateOnly(start)! < todayUtc(now)) {
     return {
       ok: false,
       error: {
@@ -98,10 +117,10 @@ export function validateRange(
   return { ok: true, range: { startDate, endDate } };
 }
 
-/** Number of rental days in a half-open range. */
+/** Number of billable rental days: any started day counts, minimum one. */
 export function rentalDays(range: DateRange): number {
   const ms = range.endDate.getTime() - range.startDate.getTime();
-  return Math.round(ms / 86_400_000);
+  return Math.max(1, Math.ceil(ms / 86_400_000 - 1e-9));
 }
 
 /** Short human label like "Oct 12–15" or "Oct 30 – Nov 2". */
@@ -118,6 +137,20 @@ export function formatRange(range: DateRange): string {
   return sameMonth
     ? `${fmt(range.startDate, true)}–${fmt(range.endDate, false)}`
     : `${fmt(range.startDate, true)} – ${fmt(range.endDate, true)}`;
+}
+
+/** "Oct 31, 10:00 → Nov 3, 10:00" for tooltips and confirmations. */
+export function formatRangeWithTime(range: DateRange): string {
+  const f = (d: Date) =>
+    d.toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" }) +
+    ", " +
+    toTimeOnly(d);
+  return `${f(range.startDate)} → ${f(range.endDate)}`;
+}
+
+/** "HH:mm" for a UTC date. */
+export function toTimeOnly(date: Date): string {
+  return date.toISOString().slice(11, 16);
 }
 
 /** `YYYY-MM-DD` for a UTC date. */

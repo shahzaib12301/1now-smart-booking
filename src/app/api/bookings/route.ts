@@ -39,10 +39,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { carId, renterName, startDate, endDate } = (body ?? {}) as Record<
-    string,
-    unknown
-  >;
+  const {
+    carId,
+    renterName,
+    renterEmail,
+    renterPhone,
+    pickupLocation,
+    notes,
+    startDate,
+    endDate,
+    startTime = "10:00",
+    endTime = "10:00",
+  } = (body ?? {}) as Record<string, unknown>;
+  const opt = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+  const email = opt(renterEmail);
+  if (email && !/^[^s@]+@[^s@]+.[^s@]+$/.test(email)) {
+    return NextResponse.json({ error: "renterEmail is not a valid email." }, { status: 400 });
+  }
 
   if (typeof carId !== "string" || !carId) {
     return NextResponse.json({ error: "carId is required." }, { status: 400 });
@@ -55,7 +68,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const validated = validateRange(startDate, endDate);
+  const validated = validateRange(startDate, endDate, new Date(), startTime, endTime);
   if (!validated.ok) {
     return NextResponse.json(
       { error: validated.error.message, code: validated.error.code },
@@ -103,6 +116,10 @@ export async function POST(request: NextRequest) {
           data: {
             carId,
             renterName: renter,
+            renterEmail: email,
+            renterPhone: opt(renterPhone),
+            pickupLocation: opt(pickupLocation),
+            notes: opt(notes),
             startDate: range.startDate,
             endDate: range.endDate,
             totalPrice: days * car.dailyRate,

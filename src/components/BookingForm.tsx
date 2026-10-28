@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { DatePicker, TimePicker, type BookedSpan } from "./DatePicker";
 
 interface CarOption {
   id: string;
@@ -10,6 +11,7 @@ interface CarOption {
   year: number;
   plate: string;
   dailyRate: number;
+  bookings: BookedSpan[];
 }
 
 interface Conflict {
@@ -32,9 +34,16 @@ type Result =
 
 interface Props {
   cars: CarOption[];
-  /** YYYY-MM-DD, used as the date input floor and the default start. */
+  /** YYYY-MM-DD, used as the date floor and the default start. */
   today: string;
 }
+
+export const PICKUP_LOCATIONS = [
+  "Main office",
+  "Airport",
+  "Downtown lot",
+  "Delivery to renter",
+];
 
 function addDays(iso: string, days: number): string {
   const d = new Date(`${iso}T00:00:00.000Z`);
@@ -42,12 +51,23 @@ function addDays(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+const inputCls =
+  "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950";
+const labelCls = "font-medium text-zinc-700 dark:text-zinc-300";
+
 export function BookingForm({ cars, today }: Props) {
   const router = useRouter();
   const [carId, setCarId] = useState(cars[0]?.id ?? "");
   const [renterName, setRenterName] = useState("");
+  const [renterEmail, setRenterEmail] = useState("");
+  const [renterPhone, setRenterPhone] = useState("");
+  const [pickupLocation, setPickupLocation] = useState(PICKUP_LOCATIONS[0]);
+  const [notes, setNotes] = useState("");
   const [start, setStart] = useState(addDays(today, 3));
+  const [startTime, setStartTime] = useState("10:00");
   const [end, setEnd] = useState(addDays(today, 6));
+  const [endTime, setEndTime] = useState("10:00");
+
   // Result of the last server availability check, tagged with the inputs it answers.
   const [remote, setRemote] = useState<{ key: string; value: Availability } | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -58,13 +78,15 @@ export function BookingForm({ cars, today }: Props) {
   const car = useMemo(() => cars.find((c) => c.id === carId), [cars, carId]);
 
   // Client-side validation is derived, not stored.
-  const requestKey = `${carId}|${start}|${end}`;
+  const requestKey = `${carId}|${start}|${startTime}|${end}|${endTime}`;
+  const startAt = `${start}T${startTime}`;
+  const endAt = `${end}T${endTime}`;
   const localProblem = !carId || !start || !end
     ? "idle"
-    : start >= end
-      ? "End date must be after the start date."
+    : startAt >= endAt
+      ? "Return must be after pick-up."
       : start < today
-        ? "Start date cannot be in the past."
+        ? "Pick-up cannot be in the past."
         : null;
 
   const availability: Availability =
@@ -76,15 +98,15 @@ export function BookingForm({ cars, today }: Props) {
           ? remote.value
           : { state: "checking" };
 
-  // Live availability check, debounced, whenever car or dates change.
+  // Live availability check, debounced, whenever car, dates or times change.
   useEffect(() => {
     if (localProblem) return;
-    const [cId, s, e] = requestKey.split("|");
+    const [cId, s, st, e, et] = requestKey.split("|");
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       let value: Availability;
       try {
-        const params = new URLSearchParams({ carId: cId, start: s, end: e });
+        const params = new URLSearchParams({ carId: cId, start: s, startTime: st, end: e, endTime: et });
         const res = await fetch(`/api/availability?${params}`, { signal: controller.signal });
         const data = await res.json();
         if (!res.ok) {
@@ -112,10 +134,6 @@ export function BookingForm({ cars, today }: Props) {
     setResult(null);
     setter(v);
   };
-  const changeCar = edit(setCarId);
-  const changeRenter = edit(setRenterName);
-  const changeStart = edit(setStart);
-  const changeEnd = edit(setEnd);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -125,16 +143,30 @@ export function BookingForm({ cars, today }: Props) {
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ carId, renterName, startDate: start, endDate: end }),
+        body: JSON.stringify({
+          carId,
+          renterName,
+          renterEmail,
+          renterPhone,
+          pickupLocation,
+          notes,
+          startDate: start,
+          startTime,
+          endDate: end,
+          endTime,
+        }),
       });
       const data = await res.json();
       if (res.status === 201) {
         setResult({
           kind: "success",
-          message: `Booked ${data.booking.car.make} ${data.booking.car.model} for ${data.booking.renterName} · $${data.booking.totalPrice}`,
+          message: `Booked ${data.booking.car.make} ${data.booking.car.model} for ${data.booking.renterName} · ${data.booking.totalPrice ? `$${data.booking.totalPrice}` : ""}`,
           flagReason: data.booking.flagReason ?? null,
         });
         setRenterName("");
+        setRenterEmail("");
+        setRenterPhone("");
+        setNotes("");
         setRemote(null); // the dates just booked are no longer available
         setCheckVersion((v) => v + 1);
         router.refresh(); // re-render the server timeline with the new bar
@@ -167,13 +199,8 @@ export function BookingForm({ cars, today }: Props) {
 
       <div className="mt-4 grid gap-4">
         <label className="grid gap-1 text-sm">
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">Car</span>
-          <select
-            suppressHydrationWarning
-            value={carId}
-            onChange={(e) => changeCar(e.target.value)}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-          >
+          <span className={labelCls}>Car</span>
+          <select suppressHydrationWarning value={carId} onChange={(e) => edit(setCarId)(e.target.value)} className={inputCls}>
             {cars.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.year} {c.make} {c.model} · {c.plate} · ${c.dailyRate}/day
@@ -183,43 +210,86 @@ export function BookingForm({ cars, today }: Props) {
         </label>
 
         <label className="grid gap-1 text-sm">
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">Renter name</span>
+          <span className={labelCls}>Renter name</span>
           <input
             suppressHydrationWarning
             value={renterName}
-            onChange={(e) => changeRenter(e.target.value)}
+            onChange={(e) => edit(setRenterName)(e.target.value)}
             placeholder="e.g. Maria Lopez"
             required
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+            className={inputCls}
           />
         </label>
 
         <div className="grid grid-cols-2 gap-3">
           <label className="grid gap-1 text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Pick-up</span>
+            <span className={labelCls}>Email</span>
             <input
               suppressHydrationWarning
-              type="date"
-              value={start}
-              min={today}
-              onChange={(e) => changeStart(e.target.value)}
-              required
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              type="email"
+              value={renterEmail}
+              onChange={(e) => edit(setRenterEmail)(e.target.value)}
+              placeholder="maria@example.com"
+              className={inputCls}
             />
           </label>
           <label className="grid gap-1 text-sm">
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Return</span>
+            <span className={labelCls}>Phone</span>
             <input
               suppressHydrationWarning
-              type="date"
-              value={end}
-              min={addDays(start || today, 1)}
-              onChange={(e) => changeEnd(e.target.value)}
-              required
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              type="tel"
+              value={renterPhone}
+              onChange={(e) => edit(setRenterPhone)(e.target.value)}
+              placeholder="+1 555 0100"
+              className={inputCls}
             />
           </label>
         </div>
+
+        <label className="grid gap-1 text-sm">
+          <span className={labelCls}>Pick-up location</span>
+          <select suppressHydrationWarning value={pickupLocation} onChange={(e) => edit(setPickupLocation)(e.target.value)} className={inputCls}>
+            {PICKUP_LOCATIONS.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="grid grid-cols-[1fr_110px] gap-3">
+          <DatePicker
+            label="Pick-up date"
+            value={start}
+            min={today}
+            onChange={edit(setStart)}
+            booked={car?.bookings ?? []}
+          />
+          <TimePicker label="Time" value={startTime} onChange={edit(setStartTime)} />
+        </div>
+
+        <div className="grid grid-cols-[1fr_110px] gap-3">
+          <DatePicker
+            label="Return date"
+            value={end}
+            min={start || today}
+            onChange={edit(setEnd)}
+            booked={car?.bookings ?? []}
+          />
+          <TimePicker label="Time" value={endTime} onChange={edit(setEndTime)} />
+        </div>
+
+        <label className="grid gap-1 text-sm">
+          <span className={labelCls}>Notes</span>
+          <textarea
+            suppressHydrationWarning
+            value={notes}
+            onChange={(e) => edit(setNotes)(e.target.value)}
+            placeholder="Child seat, late arrival, anything the handover team should know"
+            rows={2}
+            className={inputCls}
+          />
+        </label>
 
         <AvailabilityBanner availability={availability} car={car} />
 

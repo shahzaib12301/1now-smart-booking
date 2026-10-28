@@ -26,7 +26,11 @@ model Booking {
   car        Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
   carId      String
   renterName String
-  // Half-open range [startDate, endDate), stored as UTC midnight dates.
+  renterEmail    String?
+  renterPhone    String?
+  pickupLocation String?
+  notes          String?
+  // Half-open range [startDate, endDate), UTC date-times (pickup / return).
   startDate  DateTime
   endDate    DateTime
   status     String   @default("CONFIRMED") // CONFIRMED | CANCELLED

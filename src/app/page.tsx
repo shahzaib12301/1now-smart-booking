@@ -59,18 +59,28 @@ async function Dashboard() {
       totalPrice: b.totalPrice,
       flagged: b.flagged,
       flagReason: b.flagReason,
+      renterEmail: b.renterEmail,
+      renterPhone: b.renterPhone,
+      pickupLocation: b.pickupLocation,
+      notes: b.notes,
     })),
   }));
 
   const bookableCars = cars
     .filter((c) => c.status === "ACTIVE")
-    .map(({ id, make, model, year, plate, dailyRate }) => ({
-      id,
-      make,
-      model,
-      year,
-      plate,
-      dailyRate,
+    .map((c) => ({
+      id: c.id,
+      make: c.make,
+      model: c.model,
+      year: c.year,
+      plate: c.plate,
+      dailyRate: c.dailyRate,
+      // Date-only spans so the custom date picker can mark booked days.
+      bookings: c.bookings.map((b) => ({
+        start: toDateOnly(b.startDate),
+        end: toDateOnly(b.endDate),
+        renterName: b.renterName,
+      })),
     }));
 
   const flaggedCount = cars.reduce(
