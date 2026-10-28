@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { todayUtc, toDateOnly } from "@/lib/availability";
 import { FleetTimeline } from "@/components/FleetTimeline";
-import { BookingForm } from "@/components/BookingForm";
+import { BookingFormClient } from "@/components/BookingFormClient";
 
 const WINDOW_DAYS = 28;
 
@@ -108,7 +108,7 @@ async function Dashboard() {
         />
       </section>
       <aside>
-        <BookingForm cars={bookableCars} today={toDateOnly(today)} />
+        <BookingFormClient cars={bookableCars} today={toDateOnly(today)} />
       </aside>
     </div>
   );
