@@ -52,7 +52,7 @@ function addDays(iso: string, days: number): string {
 }
 
 const inputCls =
-  "w-full min-w-0 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950";
+  "w-full min-w-0 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950";
 const labelCls = "font-medium text-zinc-700 dark:text-zinc-300";
 
 export function BookingForm({ cars, today }: Props) {
@@ -197,7 +197,7 @@ export function BookingForm({ cars, today }: Props) {
         Availability is checked live as you pick dates. Overlaps are rejected on save.
       </p>
 
-      <div className="mt-4 grid gap-3">
+      <div className="mt-3 grid gap-2.5">
         <label className="relative grid min-w-0 gap-1 text-sm">
           <span className={labelCls}>Car</span>
           <select suppressHydrationWarning value={carId} onChange={(e) => edit(setCarId)(e.target.value)} className={inputCls}>
@@ -209,6 +209,7 @@ export function BookingForm({ cars, today }: Props) {
           </select>
         </label>
 
+        <div className="grid grid-cols-2 gap-3">
         <label className="relative grid min-w-0 gap-1 text-sm">
           <span className={labelCls}>Renter name</span>
           <input
@@ -226,7 +227,6 @@ export function BookingForm({ cars, today }: Props) {
           />
         </label>
 
-        <div className="grid grid-cols-2 gap-3">
           <label className="relative grid min-w-0 gap-1 text-sm">
             <span className={labelCls}>Email</span>
             <input
@@ -243,6 +243,9 @@ export function BookingForm({ cars, today }: Props) {
               className={inputCls}
             />
           </label>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
           <label className="relative grid min-w-0 gap-1 text-sm">
             <span className={labelCls}>Phone</span>
             <input
@@ -259,8 +262,6 @@ export function BookingForm({ cars, today }: Props) {
               className={inputCls}
             />
           </label>
-        </div>
-
         <label className="relative grid min-w-0 gap-1 text-sm">
           <span className={labelCls}>Pick-up location</span>
           <select suppressHydrationWarning value={pickupLocation} onChange={(e) => edit(setPickupLocation)(e.target.value)} className={inputCls}>
@@ -271,6 +272,7 @@ export function BookingForm({ cars, today }: Props) {
             ))}
           </select>
         </label>
+        </div>
 
         <div className="grid grid-cols-[1fr_110px] gap-3">
           <DatePicker

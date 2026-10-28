@@ -146,7 +146,7 @@ export function FleetTimeline({ cars, windowStart, windowDays, today }: Props) {
                 />
               ) : null}
               {/* booking bars */}
-              <div className="relative h-full min-h-[76px]">
+              <div className="relative h-full min-h-[92px]">
                 {car.bookings
                   .filter(
                     (b) =>
